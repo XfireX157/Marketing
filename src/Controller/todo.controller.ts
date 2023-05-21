@@ -17,7 +17,9 @@ import { HttpExceptionFilter } from 'src/Exception/http-exception.filter';
 import { RolesGuard } from 'src/Guards/roles.guard';
 import { Role } from 'src/Entity/role.enum';
 import { Roles } from 'src/Decorator/roles.decorator';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Todo')
 @Controller('todo')
 export class TodoController {
   constructor(private readonly todoService: TodoService) {}

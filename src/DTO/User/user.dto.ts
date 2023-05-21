@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEmail,
   IsEnum,
@@ -8,8 +9,13 @@ import {
 import { Role } from 'src/Entity/role.enum';
 
 export class userDto {
+  @ApiProperty()
   id?: string;
 
+  @ApiProperty({
+    type: String,
+    description: 'Nome do usuário',
+  })
   @IsString({ each: true })
   @IsNotEmpty({ message: 'Essa campo não pode está vazio' })
   name?: string;
@@ -23,16 +29,9 @@ export class userDto {
   @Matches(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[^\w\s]).{8,}$/)
   password: string;
 
+  @ApiProperty({
+    enum: ['user', 'admin', 'moderator'],
+  })
   @IsEnum(Role)
   role?: Role;
-}
-
-export class userLoginDto {
-  @IsEmail()
-  @IsNotEmpty({ message: 'Essa campo não pode está vazio' })
-  email: string;
-
-  @IsString()
-  @IsNotEmpty({ message: 'Essa campo não pode está vazio' })
-  password: string;
 }

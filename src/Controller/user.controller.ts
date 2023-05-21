@@ -8,8 +8,11 @@ import {
   Patch,
 } from '@nestjs/common';
 import { UserService } from '../Service/user.service';
-import { userDto, userLoginDto } from 'src/DTO/user.dto';
+import { userDto } from 'src/DTO/User/user.dto';
+import { userLoginDto } from 'src/DTO/User/userLogin.dto';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('User')
 @Controller('user')
 export class userController {
   constructor(private readonly userServices: UserService) {}
