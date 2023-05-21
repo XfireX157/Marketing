@@ -6,6 +6,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { userEntity } from 'src/Entity/user.entity';
 import { ForbiddenException } from 'src/Exception/forbidden.exception';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -34,17 +35,35 @@ export class UserService {
   }
 
   async findOne(email: string): Promise<userEntity> | undefined {
-    const getEmail = await this.userTodo.find((item) => item.email === email);
+    const getEmail = this.userTodo.find((item) => item.email === email);
     if (!getEmail) {
-      throw new ForbiddenException('Esse email não existe', 404);
+      throw new UnauthorizedException();
     }
     return getEmail;
   }
 
   async createUser(userTodos: userEntity) {
+    const saltOrRounds = 10;
+    const hash = await bcrypt.hash(userTodos.password, saltOrRounds);
+    userTodos.password = hash;
     userTodos.id = await this.generateID();
     this.userTodo.push(userTodos);
     return userTodos;
+  }
+
+  async singIn(users: userEntity) {
+    const user = await this.findOne(users.email);
+    const isPasswordValid = await bcrypt.compare(users.password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException();
+    }
+    const payload = {
+      email: user.email,
+      password: user.password,
+      roles: user.role,
+    };
+    const token = await this.jwtService.signAsync(payload);
+    return { token };
   }
 
   async deleteUser(id: string): Promise<userEntity> {
@@ -68,15 +87,5 @@ export class UserService {
       userArray.password = userTodos.password;
     }
     return userArray;
-  }
-
-  async singIn(users: userEntity) {
-    const user = await this.findOne(users.email);
-    if (!user && user.password !== users.password) {
-      throw new UnauthorizedException();
-    }
-    const payload = { email: user.email, password: user.password };
-    const token = await this.jwtService.signAsync(payload);
-    return { token };
   }
 }

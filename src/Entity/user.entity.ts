@@ -5,5 +5,5 @@ export interface userEntity {
   name?: string;
   email: string;
   password: string;
-  role?: Role[];
+  role?: Role;
 }
