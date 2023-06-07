@@ -1,17 +1,22 @@
-import {
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { userEntity } from 'src/Entity/user.entity';
 import { ForbiddenException } from 'src/Exception/forbidden.exception';
+import { userLoginDto } from 'src/DTO/User/userLogin.dto';
+import { userRegisterDto } from 'src/DTO/User/userRegister.dto';
+import { createHash, randomBytes } from 'crypto';
 import * as bcrypt from 'bcrypt';
+import { EmailService } from './email.service';
+import { PasswordResetToken } from 'src/DTO/User/PasswordResetToken';
 
 @Injectable()
 export class UserService {
-  constructor(private jwtService: JwtService) {}
+  constructor(
+    private jwtService: JwtService,
+    private EmailServices: EmailService,
+  ) {}
   private readonly userTodo: userEntity[] = [];
+  private readonly tokenArray: PasswordResetToken[] = [];
 
   async generateID(): Promise<string> {
     var numRandom = Math.floor(Math.random() * 9999);
@@ -19,17 +24,16 @@ export class UserService {
     return idAleatorio;
   }
 
-  async getAllUser(): Promise<userEntity[]> {
-    if (this.userTodo.length === 0) {
-      throw new ForbiddenException('Não tem nenhum todo criado', 404);
-    }
-    return this.userTodo;
+  async generateHashRandom(): Promise<string> {
+    const randomBytesBuffer = randomBytes(16);
+    const hash = createHash('sha256').update(randomBytesBuffer).digest('hex');
+    return hash;
   }
 
   async getId(id: string): Promise<userEntity> {
     const getId = this.userTodo.find((item) => item.id === id);
     if (!getId) {
-      throw new NotFoundException('Esse usuario não existe');
+      throw new ForbiddenException('Esse usuario não existe', 404);
     }
     return getId;
   }
@@ -37,12 +41,12 @@ export class UserService {
   async findOne(email: string): Promise<userEntity> | undefined {
     const getEmail = this.userTodo.find((item) => item.email === email);
     if (!getEmail) {
-      throw new UnauthorizedException();
+      throw new ForbiddenException('Esse usuario não existe', 404);
     }
     return getEmail;
   }
 
-  async createUser(userTodos: userEntity) {
+  async register(userTodos: userRegisterDto) {
     const saltOrRounds = 10;
     const hash = await bcrypt.hash(userTodos.password, saltOrRounds);
     userTodos.password = hash;
@@ -51,7 +55,7 @@ export class UserService {
     return userTodos;
   }
 
-  async singIn(users: userEntity) {
+  async singIn(users: userLoginDto) {
     const user = await this.findOne(users.email);
     const isPasswordValid = await bcrypt.compare(users.password, user.password);
     if (!isPasswordValid) {
@@ -66,26 +70,50 @@ export class UserService {
     return { token };
   }
 
-  async deleteUser(id: string): Promise<userEntity> {
-    const userArray = await this.getId(id);
-    if (!userArray) {
-      throw new NotFoundException('Esse usuario não existe');
-    }
-    const index = this.userTodo.findIndex((item) => item.id === id);
-    this.userTodo.splice(index, 1);
-    return userArray;
+  async forgetPassword(email: string) {
+    await this.findOne(email);
+    const token = await this.generateHashRandom();
+
+    this.tokenArray.push({
+      email,
+      token,
+      tokenExpire: new Date(Date.now() + 3600),
+    });
+
+    await this.EmailServices.sendMail(
+      email,
+      'Redefinição da sua senha',
+      `Verifique sua conta, com essa token: ${token}`,
+    );
+
+    return {
+      message:
+        'Um e-mail de redefinição de senha foi enviado para o seu endereço de e-mail',
+    };
   }
 
-  async updateUser(id: string, userTodos: userEntity): Promise<userEntity> {
-    const userArray = await this.getId(id);
-    if (!userArray) {
-      throw new NotFoundException('Esse usuario não existe');
+  async resetPassword(token: string, password: string) {
+    const tokenData = this.tokenArray.find((item) => item.token === token);
+    const user = this.userTodo.find((item) => item.email === tokenData.email);
+
+    if (!tokenData) {
+      throw new ForbiddenException('Token de redefinição de senha inválido');
     }
-    if (userArray) {
-      userArray.name = userTodos.name;
-      userArray.email = userTodos.email;
-      userArray.password = userTodos.password;
+
+    if (!user) {
+      throw new ForbiddenException('Usuário não encontrado');
     }
-    return userArray;
+
+    const hashPassword = await bcrypt.hash(password, 10);
+    user.password = hashPassword;
+
+    const tokenIndex = this.tokenArray.findIndex(
+      (item) => item.token === token,
+    );
+    if (tokenIndex !== -1) {
+      this.tokenArray.splice(tokenIndex, 1);
+    }
+
+    return { message: 'Senha redefomoda com sucesso' };
   }
 }

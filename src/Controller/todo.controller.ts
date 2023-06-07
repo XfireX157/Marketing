@@ -18,6 +18,7 @@ import { RolesGuard } from 'src/Guards/roles.guard';
 import { Role } from 'src/Entity/role.enum';
 import { Roles } from 'src/Decorator/roles.decorator';
 import { ApiTags } from '@nestjs/swagger';
+import { todoEntity } from 'src/Entity/todo.entity';
 
 @ApiTags('Todo')
 @Controller('todo')
@@ -37,14 +38,14 @@ export class TodoController {
     return this.todoService.getID(id);
   }
 
-  @Roles(Role.Admin)
+  @Roles(Role.Admin, Role.Moderator)
   @UseGuards(AuthGuard, RolesGuard)
   @Post()
-  createTodo(@Body() todo: todoDto) {
+  createTodo(@Body() todo: todoEntity) {
     return this.todoService.createTodo(todo);
   }
 
-  @Roles(Role.Admin)
+  @Roles(Role.Admin, Role.Moderator)
   @UseGuards(AuthGuard, RolesGuard)
   @Delete(':id')
   @UseFilters(HttpExceptionFilter)
@@ -52,7 +53,7 @@ export class TodoController {
     return this.todoService.deleteID(id);
   }
 
-  @Roles(Role.Admin)
+  @Roles(Role.Admin, Role.Moderator)
   @UseGuards(AuthGuard, RolesGuard)
   @Patch(':id')
   @UseFilters(HttpExceptionFilter)

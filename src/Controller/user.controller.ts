@@ -1,14 +1,6 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Patch,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { UserService } from '../Service/user.service';
-import { userDto } from 'src/DTO/User/user.dto';
+import { userRegisterDto } from 'src/DTO/User/userRegister.dto';
 import { userLoginDto } from 'src/DTO/User/userLogin.dto';
 import { ApiTags } from '@nestjs/swagger';
 
@@ -17,13 +9,8 @@ import { ApiTags } from '@nestjs/swagger';
 export class userController {
   constructor(private readonly userServices: UserService) {}
 
-  @Get()
-  getAllUser(): Promise<userDto[]> {
-    return this.userServices.getAllUser();
-  }
-
   @Get(':id')
-  getIdUser(@Param('id') id: string): Promise<userDto> {
+  getIdUser(@Param('id') id: string): Promise<userRegisterDto> {
     return this.userServices.getId(id);
   }
 
@@ -33,20 +20,20 @@ export class userController {
   }
 
   @Post('register')
-  createUser(@Body() userTodo: userDto) {
-    return this.userServices.createUser(userTodo);
+  createUser(@Body() userTodo: userRegisterDto) {
+    return this.userServices.register(userTodo);
   }
 
-  @Delete(':id')
-  deleteUser(@Param('id') id: string): Promise<userDto> {
-    return this.userServices.deleteUser(id);
+  @Post('forgot-password')
+  async forgotPassword(@Body('email') email: string) {
+    return this.userServices.forgetPassword(email);
   }
 
-  @Patch(':id')
-  updateUser(
-    @Param('id') id: string,
-    @Body() userTodo: userDto,
-  ): Promise<userDto> {
-    return this.userServices.updateUser(id, userTodo);
+  @Post('reset-password')
+  async resetPassword(
+    @Query('token') token: string,
+    @Body('password') password: string,
+  ) {
+    return this.userServices.resetPassword(token, password);
   }
 }

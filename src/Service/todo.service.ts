@@ -2,10 +2,12 @@ import { NotFoundException, Injectable } from '@nestjs/common';
 import { ForbiddenException } from 'src/Exception/forbidden.exception';
 import { updateTodo } from 'src/DTO/Todos/updateTodo.dto';
 import { todoEntity } from 'src/Entity/todo.entity';
+import { CategoryService } from './category.service';
 
 @Injectable()
 export class TodoService {
   private readonly todos: todoEntity[] = [];
+  constructor(private categoryServices: CategoryService) {}
 
   async generateID(): Promise<string> {
     var numRandom = Math.floor(Math.random() * 9999);
@@ -17,6 +19,7 @@ export class TodoService {
     if (this.todos.length === 0) {
       throw new ForbiddenException('Não tem nenhum todo criado', 404);
     }
+
     return this.todos;
   }
 
@@ -41,6 +44,7 @@ export class TodoService {
     }
     const index = this.todos.findIndex((value) => value.id === id);
     this.todos.splice(index, 1);
+
     return taskArray;
   }
 
@@ -48,9 +52,8 @@ export class TodoService {
     const taskArray = await this.getID(id);
     if (!taskArray) {
       throw new NotFoundException('Não existe nenhum todo com esse ID');
-    } else if (taskArray) {
-      Object.assign(taskArray, task);
     }
-    return taskArray;
+    Object.assign(taskArray, task);
+    return task;
   }
 }

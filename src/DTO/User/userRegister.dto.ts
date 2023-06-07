@@ -8,7 +8,7 @@ import {
 } from 'class-validator';
 import { Role } from 'src/Entity/role.enum';
 
-export class userDto {
+export class userRegisterDto {
   @ApiProperty()
   id?: string;
 

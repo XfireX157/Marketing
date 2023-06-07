@@ -1,7 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
+import { categoryEntity } from 'src/Entity/catagory.entity';
 
 export class todoDto {
+  @ApiProperty()
   id: string;
 
   @IsString()
