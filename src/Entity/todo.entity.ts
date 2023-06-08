@@ -1,8 +1,9 @@
 import { categoryEntity } from './catagory.entity';
 
-export interface todoEntity {
+export class todoEntity {
   id: string;
   name: string;
   description: string;
   price: number;
+  category: categoryEntity;
 }

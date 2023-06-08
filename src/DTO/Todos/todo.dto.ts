@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
-import { categoryEntity } from 'src/Entity/catagory.entity';
 
 export class todoDto {
   @ApiProperty()
@@ -18,5 +17,10 @@ export class todoDto {
 
   @IsNumber()
   @IsNotEmpty({ message: 'Essa campo não pode está vazio' })
+  @ApiProperty()
   price: number;
+
+  @IsNotEmpty({ message: 'categoryName não pode ser vazio' })
+  @ApiProperty()
+  categoryName: string;
 }

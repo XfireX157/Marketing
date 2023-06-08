@@ -1,12 +1,14 @@
-import { NotFoundException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ForbiddenException } from 'src/Exception/forbidden.exception';
-import { updateTodo } from 'src/DTO/Todos/updateTodo.dto';
+import { updateTodoDTO } from 'src/DTO/Todos/updateTodo.dto';
 import { todoEntity } from 'src/Entity/todo.entity';
 import { CategoryService } from './category.service';
+import { todoDto } from 'src/DTO/Todos/todo.dto';
+import { database } from 'src/Database/db';
+import { todoViewDTO } from 'src/DTO/Todos/todoView.dto';
 
 @Injectable()
 export class TodoService {
-  private readonly todos: todoEntity[] = [];
   constructor(private categoryServices: CategoryService) {}
 
   async generateID(): Promise<string> {
@@ -15,44 +17,42 @@ export class TodoService {
     return idAleatorio;
   }
 
-  async getAll(): Promise<todoEntity[]> {
-    if (this.todos.length === 0) {
-      throw new ForbiddenException('Não tem nenhum todo criado', 404);
+  async getAll(): Promise<todoViewDTO[]> {
+    if (database.todos.length === 0) {
+      throw new ForbiddenException('Não tem nenhum todo criado', 204);
     }
-
-    return this.todos;
+    return database.todos;
   }
 
-  async getID(id: string): Promise<todoEntity> {
-    const getId = this.todos.find((item) => item.id === id);
+  async getID(id: string): Promise<todoViewDTO> {
+    const getId = database.todos.find((item) => item.id === id);
     if (!getId) {
-      throw new NotFoundException('Não existe nenhum todo com esse ID');
+      throw new ForbiddenException('Não tem nenhum todo com esse Id', 404);
     }
     return getId;
   }
 
-  async createTodo(todo: todoEntity) {
-    todo.id = await this.generateID();
-    this.todos.push(todo);
+  async createTodo(todo: todoDto) {
+    const todoDto: todoEntity = {
+      id: await this.generateID(),
+      name: todo.name,
+      description: todo.description,
+      price: todo.price,
+      category: await this.categoryServices.findName(todo.categoryName),
+    };
+    database.todos.push(todoDto);
     return todo;
   }
 
-  async deleteID(id: string): Promise<todoEntity> {
+  async deleteID(id: string): Promise<todoViewDTO> {
     const taskArray = await this.getID(id);
-    if (!taskArray) {
-      throw new NotFoundException('Não existe nenhum todo com esse ID');
-    }
-    const index = this.todos.findIndex((value) => value.id === id);
-    this.todos.splice(index, 1);
-
+    const index = database.todos.findIndex((value) => value.id === id);
+    database.todos.splice(index, 1);
     return taskArray;
   }
 
-  async updateID(id: string, task: updateTodo): Promise<updateTodo> {
+  async updateID(id: string, task: updateTodoDTO): Promise<updateTodoDTO> {
     const taskArray = await this.getID(id);
-    if (!taskArray) {
-      throw new NotFoundException('Não existe nenhum todo com esse ID');
-    }
     Object.assign(taskArray, task);
     return task;
   }

@@ -10,7 +10,7 @@ import {
   UseFilters,
 } from '@nestjs/common';
 import { todoDto } from 'src/DTO/Todos/todo.dto';
-import { updateTodo } from 'src/DTO/Todos/updateTodo.dto';
+import { updateTodoDTO } from 'src/DTO/Todos/updateTodo.dto';
 import { TodoService } from 'src/Service/todo.service';
 import { AuthGuard } from 'src/Guards/jwt.guard';
 import { HttpExceptionFilter } from 'src/Exception/http-exception.filter';
@@ -18,7 +18,7 @@ import { RolesGuard } from 'src/Guards/roles.guard';
 import { Role } from 'src/Entity/role.enum';
 import { Roles } from 'src/Decorator/roles.decorator';
 import { ApiTags } from '@nestjs/swagger';
-import { todoEntity } from 'src/Entity/todo.entity';
+import { todoViewDTO } from 'src/DTO/Todos/todoView.dto';
 
 @ApiTags('Todo')
 @Controller('todo')
@@ -27,21 +27,21 @@ export class TodoController {
 
   @Get()
   @UseFilters(HttpExceptionFilter)
-  getAll(): Promise<todoDto[]> {
+  getAll(): Promise<todoViewDTO[]> {
     return this.todoService.getAll();
   }
 
   @UseGuards(AuthGuard)
   @UseFilters(HttpExceptionFilter)
   @Get(':id')
-  getIdTodo(@Param('id') id: string): Promise<todoDto> {
+  getIdTodo(@Param('id') id: string): Promise<todoViewDTO> {
     return this.todoService.getID(id);
   }
 
   @Roles(Role.Admin, Role.Moderator)
   @UseGuards(AuthGuard, RolesGuard)
   @Post()
-  createTodo(@Body() todo: todoEntity) {
+  createTodo(@Body() todo: todoDto) {
     return this.todoService.createTodo(todo);
   }
 
@@ -49,7 +49,7 @@ export class TodoController {
   @UseGuards(AuthGuard, RolesGuard)
   @Delete(':id')
   @UseFilters(HttpExceptionFilter)
-  deleteTodo(@Param('id') id: string): Promise<todoDto> {
+  deleteTodo(@Param('id') id: string): Promise<todoViewDTO> {
     return this.todoService.deleteID(id);
   }
 
@@ -59,8 +59,8 @@ export class TodoController {
   @UseFilters(HttpExceptionFilter)
   updateID(
     @Param('id') id: string,
-    @Body() todos: updateTodo,
-  ): Promise<updateTodo> {
+    @Body() todos: updateTodoDTO,
+  ): Promise<updateTodoDTO> {
     return this.todoService.updateID(id, todos);
   }
 }

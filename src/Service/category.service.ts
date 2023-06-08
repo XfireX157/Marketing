@@ -1,59 +1,67 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { CategoryDTO } from 'src/DTO/Category/category.dto';
+import { categoryViewDTO } from 'src/DTO/Category/categoryView.dto';
+import { updateCategoryDTO } from 'src/DTO/Category/updateCategory.dto';
+import { database } from 'src/Database/db';
 import { categoryEntity } from 'src/Entity/catagory.entity';
 import { ForbiddenException } from 'src/Exception/forbidden.exception';
 
 @Injectable()
 export class CategoryService {
-  private readonly category: categoryEntity[] = [];
-
   async generateID(): Promise<string> {
     var numRandom = Math.floor(Math.random() * 9999);
     var idAleatorio = numRandom.toString();
     return idAleatorio;
   }
 
-  async getAll(): Promise<categoryEntity[]> {
-    if (this.category.length === 0) {
-      throw new ForbiddenException('Não tem nenhum category criado', 404);
+  async getAll(): Promise<categoryViewDTO[]> {
+    if (database.category.length === 0) {
+      throw new ForbiddenException('Não tem nenhum category criado', 204);
     }
-    return this.category;
+    return database.category;
   }
 
-  async getID(id: string): Promise<categoryEntity> {
-    const getId = this.category.find((item) => item.id === id);
-    if (!getId) {
-      throw new NotFoundException('Não existe nenhum category com esse ID');
+  async findName(name: string): Promise<categoryEntity> {
+    const findName = database.category.find((item) => item.name === name);
+    if (!findName) {
+      throw new ForbiddenException(
+        'Não existe nenhum category com esse nome',
+        404,
+      );
     }
-    return getId;
+    return findName;
   }
 
-  async createCategory(createCategory: categoryEntity) {
+  async getID(id: string): Promise<categoryViewDTO> {
+    const getID = database.category.find((item) => item.id === id);
+    if (!getID) {
+      throw new ForbiddenException(
+        'Não existe nenhum category com esse id',
+        404,
+      );
+    }
+    return getID;
+  }
+
+  async createCategory(createCategory: CategoryDTO) {
     createCategory.id = await this.generateID();
-    this.category.push(createCategory);
+    database.category.push(createCategory);
     return createCategory;
   }
 
   async updateCategoryId(
     id: string,
-    category: categoryEntity,
-  ): Promise<categoryEntity> {
+    category: updateCategoryDTO,
+  ): Promise<updateCategoryDTO> {
     const categoryId = await this.getID(id);
-    if (!categoryId) {
-      throw new ForbiddenException('Não tem nenhum category com esse id', 404);
-    }
-
     Object.assign(categoryId, category);
     return category;
   }
 
-  async deleteCategoryId(id: string): Promise<categoryEntity> {
+  async deleteCategoryId(id: string): Promise<categoryViewDTO> {
     const categoryId = await this.getID(id);
-    if (!categoryId) {
-      throw new ForbiddenException('Não tem nenhum category com esse id', 404);
-    }
-    const index = this.category.findIndex((item) => item.id === id);
-    this.category.splice(index, 1);
-
+    const index = database.category.findIndex((item) => item.id === id);
+    database.category.splice(index, 1);
     return categoryId;
   }
 }
